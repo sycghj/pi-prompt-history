@@ -13,7 +13,8 @@
     "sqlite"
   ],
   "pi": {
-    "extensions": ["./src/index.ts"]
+    "extensions": ["./src/index.ts"],
+    "image": "https://raw.githubusercontent.com/vedang/pi-prompt-history/main/images/banner.png"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
