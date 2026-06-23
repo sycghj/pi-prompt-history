@@ -391,7 +391,15 @@ export class PromptHistorySelector implements Focusable {
 
   private resolveAction(data: string): PromptHistoryAction | null {
     if (matchesKey(data, this.actionKeyBindings.copy)) return "copy";
+    if (data === CSI_F2_SEQUENCE && this.actionKeyBindings.copy === "f2") {
+      return "copy";
+    }
+
     if (matchesKey(data, this.actionKeyBindings.resume)) return "resume";
+    if (data === CSI_F2_SEQUENCE && this.actionKeyBindings.resume === "f2") {
+      return "resume";
+    }
+
     return null;
   }
 
@@ -522,6 +530,8 @@ const KEY_LABELS: Record<string, string> = {
   enter: "Enter",
   f2: "F2",
 };
+
+const CSI_F2_SEQUENCE = "\x1b[1;1Q";
 
 function formatKeyLabel(key: string): string {
   return KEY_LABELS[key] ?? key;

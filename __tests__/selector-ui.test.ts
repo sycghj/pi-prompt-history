@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { PromptHistorySelector } from "../src/selector-ui";
+import {
+  type PromptHistorySelection,
+  PromptHistorySelector,
+} from "../src/selector-ui";
 
 type TestResult = {
   id: string;
@@ -98,4 +101,25 @@ test("PromptHistorySelector accepts legacy keybinding ids from injected managers
 
   const rendered = selector.render(80).join("\n");
   assert.match(rendered, /\n│› second prompt/);
+});
+
+test("PromptHistorySelector treats explicit CSI F2 as resume action", () => {
+  let selectedAction: PromptHistorySelection["action"] | undefined;
+  const selector = new PromptHistorySelector({
+    tui: { requestRender() {} } as never,
+    theme: createTheme(),
+    initialScope: "local",
+    initialResults: createResults() as never,
+    primaryAction: "copy",
+    currentCwd: "/tmp/project-a",
+    onSearch: async () => [],
+    onSelect: (selection: PromptHistorySelection) => {
+      selectedAction = selection.action;
+    },
+    onCancel: () => {},
+  } as never);
+
+  selector.handleInput("\x1b[1;1Q");
+
+  assert.equal(selectedAction, "resume");
 });
