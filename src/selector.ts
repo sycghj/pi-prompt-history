@@ -60,6 +60,9 @@ const PROMPT_HISTORY_SESSION_GROUP_LABELS: Record<
   "other-cwd": "Other cwd",
 };
 
+const PROMPT_HISTORY_QUERY_INTENT_PATTERN =
+  /^\s*(copy|resume)\s*:\s*([\s\S]*)$/i;
+
 const PROMPT_HISTORY_ACTION_KEY_BINDINGS: Record<
   PromptHistoryAction,
   PromptHistoryActionKeyBindings
@@ -83,7 +86,7 @@ export function resolvePromptHistoryActionKeyBindings(
 export function resolvePromptHistoryQueryIntent(
   input: string,
 ): PromptHistoryQueryIntent {
-  const match = input.match(/^\s*(copy|resume)\s*:\s*([\s\S]*)$/i);
+  const match = PROMPT_HISTORY_QUERY_INTENT_PATTERN.exec(input);
   if (!match) return { query: input };
 
   return {

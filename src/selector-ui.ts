@@ -399,7 +399,7 @@ export class PromptHistorySelector implements Focusable {
   }
 
   private resolveAction(data: string): PromptHistoryAction | null {
-    const queryIntent = resolvePromptHistoryQueryIntent(this.query);
+    const queryIntent = this.queryIntent();
     if (queryIntent.action && matchesKey(data, Key.enter)) {
       return queryIntent.action;
     }
@@ -416,7 +416,7 @@ export class PromptHistorySelector implements Focusable {
   }
 
   private helpText(): string {
-    const queryIntent = resolvePromptHistoryQueryIntent(this.query);
+    const queryIntent = this.queryIntent();
     const actionHints = queryIntent.action
       ? [`Enter ${queryIntent.action}`, "copy:/resume: query"]
       : [
@@ -433,16 +433,17 @@ export class PromptHistorySelector implements Focusable {
     ].join(" • ");
   }
 
+  private queryIntent(): ReturnType<typeof resolvePromptHistoryQueryIntent> {
+    return resolvePromptHistoryQueryIntent(this.query);
+  }
+
   private async refreshResults(): Promise<void> {
     const requestId = ++this.requestId;
     this.loading = true;
     this.tui.requestRender();
 
     try {
-      const results = await this.onSearch(
-        resolvePromptHistoryQueryIntent(this.query).query,
-        this.scope,
-      );
+      const results = await this.onSearch(this.queryIntent().query, this.scope);
       if (requestId !== this.requestId) {
         return;
       }

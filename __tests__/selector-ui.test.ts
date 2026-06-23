@@ -55,6 +55,34 @@ function createTheme(): {
   };
 }
 
+function createActionProbe(options: { initialQuery?: string } = {}): {
+  selector: PromptHistorySelector;
+  get selectedAction(): PromptHistorySelection["action"] | undefined;
+} {
+  let selectedAction: PromptHistorySelection["action"] | undefined;
+  const selector = new PromptHistorySelector({
+    tui: { requestRender() {} } as never,
+    theme: createTheme(),
+    initialScope: "local",
+    initialResults: createResults() as never,
+    primaryAction: "copy",
+    currentCwd: "/tmp/project-a",
+    initialQuery: options.initialQuery,
+    onSearch: async () => [],
+    onSelect: (selection: PromptHistorySelection) => {
+      selectedAction = selection.action;
+    },
+    onCancel: () => {},
+  } as never);
+
+  return {
+    selector,
+    get selectedAction() {
+      return selectedAction;
+    },
+  };
+}
+
 test("PromptHistorySelector uses injected keybindings for navigation", () => {
   const selector = new PromptHistorySelector({
     tui: { requestRender() {} } as never,
@@ -105,45 +133,18 @@ test("PromptHistorySelector accepts legacy keybinding ids from injected managers
 
 test("PromptHistorySelector treats F2 CSI variants as resume action", () => {
   for (const sequence of ["\x1b[Q", "\x1b[1;1Q", "\x1b[12;1~"]) {
-    let selectedAction: PromptHistorySelection["action"] | undefined;
-    const selector = new PromptHistorySelector({
-      tui: { requestRender() {} } as never,
-      theme: createTheme(),
-      initialScope: "local",
-      initialResults: createResults() as never,
-      primaryAction: "copy",
-      currentCwd: "/tmp/project-a",
-      onSearch: async () => [],
-      onSelect: (selection: PromptHistorySelection) => {
-        selectedAction = selection.action;
-      },
-      onCancel: () => {},
-    } as never);
+    const probe = createActionProbe();
 
-    selector.handleInput(sequence);
+    probe.selector.handleInput(sequence);
 
-    assert.equal(selectedAction, "resume", JSON.stringify(sequence));
+    assert.equal(probe.selectedAction, "resume", JSON.stringify(sequence));
   }
 });
 
 test("PromptHistorySelector lets typed resume intent make Enter resume", () => {
-  let selectedAction: PromptHistorySelection["action"] | undefined;
-  const selector = new PromptHistorySelector({
-    tui: { requestRender() {} } as never,
-    theme: createTheme(),
-    initialScope: "local",
-    initialResults: createResults() as never,
-    primaryAction: "copy",
-    currentCwd: "/tmp/project-a",
-    initialQuery: "resume: super_admin",
-    onSearch: async () => [],
-    onSelect: (selection: PromptHistorySelection) => {
-      selectedAction = selection.action;
-    },
-    onCancel: () => {},
-  } as never);
+  const probe = createActionProbe({ initialQuery: "resume: super_admin" });
 
-  selector.handleInput("\r");
+  probe.selector.handleInput("\r");
 
-  assert.equal(selectedAction, "resume");
+  assert.equal(probe.selectedAction, "resume");
 });

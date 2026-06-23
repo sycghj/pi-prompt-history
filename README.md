@@ -82,7 +82,7 @@ Example `~/.pi/agent/extensions/prompt-history.json`:
 - **Resume action**: always prompts a follow-up choice:
   - `Fork from this point (default)`: if needed, prompt-history first resumes the selected session, then forks from the chosen prompt and pre-fills the selected text.
   - `Restore entire session`: switches to the selected entry's session file.
-- **Typed intent**: if `F2` is unreliable in your terminal, type `resume: super_admin` in the editor, press `Ctrl+R`, then press `Enter` on the desired result.
+- **Typed intent**: prefix any search with `resume:` or `copy:` to make `Enter` perform that action even when `F2` is unreliable.
 
 ### Session-aware UX
 
