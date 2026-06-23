@@ -21,7 +21,10 @@ import {
   type SearchScope,
   searchPrompts,
 } from "./search";
-import { PROMPT_HISTORY_RESUME_CHOICES } from "./selector";
+import {
+  PROMPT_HISTORY_RESUME_CHOICES,
+  resolvePromptHistoryQueryIntent,
+} from "./selector";
 import type {
   PromptHistorySelection,
   PromptHistorySelector,
@@ -220,7 +223,7 @@ export async function openPromptHistory(
 
   try {
     const initialResults = await searchWithCurrentContext(
-      initialQuery,
+      resolvePromptHistoryQueryIntent(initialQuery).query,
       initialScope,
     );
 

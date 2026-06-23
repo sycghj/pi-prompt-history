@@ -1,5 +1,5 @@
 import * as PiTui from "@mariozechner/pi-tui";
-import type { Focusable, TUI } from "@mariozechner/pi-tui";
+import type { Focusable, KeyId, TUI } from "@mariozechner/pi-tui";
 import {
   Input,
   Key,
@@ -19,6 +19,7 @@ import {
   formatPromptHistoryScopeLabel,
   groupPromptHistoryResults,
   resolvePromptHistoryActionKeyBindings,
+  resolvePromptHistoryQueryIntent,
   resolvePromptHistorySessionGroup,
   togglePromptHistoryScope,
 } from "./selector";
@@ -140,6 +141,14 @@ function matchesPromptHistoryKeybinding(
   names: readonly string[],
 ): boolean {
   return names.some((name) => keybindings.matches(data, name));
+}
+
+function matchesPromptHistoryActionKey(data: string, key: KeyId): boolean {
+  return matchesKey(data, key) || (key === "f2" && matchesExplicitF2(data));
+}
+
+function matchesExplicitF2(data: string): boolean {
+  return data.startsWith(ESCAPE_SEQUENCE) && F2_CSI_PATTERN.test(data.slice(1));
 }
 
 export interface PromptHistorySelection {
@@ -390,13 +399,16 @@ export class PromptHistorySelector implements Focusable {
   }
 
   private resolveAction(data: string): PromptHistoryAction | null {
-    if (matchesKey(data, this.actionKeyBindings.copy)) return "copy";
-    if (data === CSI_F2_SEQUENCE && this.actionKeyBindings.copy === "f2") {
+    const queryIntent = resolvePromptHistoryQueryIntent(this.query);
+    if (queryIntent.action && matchesKey(data, Key.enter)) {
+      return queryIntent.action;
+    }
+
+    if (matchesPromptHistoryActionKey(data, this.actionKeyBindings.copy)) {
       return "copy";
     }
 
-    if (matchesKey(data, this.actionKeyBindings.resume)) return "resume";
-    if (data === CSI_F2_SEQUENCE && this.actionKeyBindings.resume === "f2") {
+    if (matchesPromptHistoryActionKey(data, this.actionKeyBindings.resume)) {
       return "resume";
     }
 
@@ -404,11 +416,18 @@ export class PromptHistorySelector implements Focusable {
   }
 
   private helpText(): string {
+    const queryIntent = resolvePromptHistoryQueryIntent(this.query);
+    const actionHints = queryIntent.action
+      ? [`Enter ${queryIntent.action}`, "copy:/resume: query"]
+      : [
+          `${formatKeyLabel(this.actionKeyBindings.copy)} copy`,
+          `${formatKeyLabel(this.actionKeyBindings.resume)} resume`,
+        ];
+
     return [
       "↑ ↓ navigate",
       "PgUp/PgDn page",
-      `${formatKeyLabel(this.actionKeyBindings.copy)} copy`,
-      `${formatKeyLabel(this.actionKeyBindings.resume)} resume`,
+      ...actionHints,
       "Tab/Ctrl+R toggle",
       "Esc cancel",
     ].join(" • ");
@@ -420,7 +439,10 @@ export class PromptHistorySelector implements Focusable {
     this.tui.requestRender();
 
     try {
-      const results = await this.onSearch(this.query, this.scope);
+      const results = await this.onSearch(
+        resolvePromptHistoryQueryIntent(this.query).query,
+        this.scope,
+      );
       if (requestId !== this.requestId) {
         return;
       }
@@ -531,7 +553,8 @@ const KEY_LABELS: Record<string, string> = {
   f2: "F2",
 };
 
-const CSI_F2_SEQUENCE = "\x1b[1;1Q";
+const ESCAPE_SEQUENCE = "\x1b";
+const F2_CSI_PATTERN = /^\[(?:Q|1(?:;1(?::[12])?)?Q|12;1(?::[12])?~)$/;
 
 function formatKeyLabel(key: string): string {
   return KEY_LABELS[key] ?? key;

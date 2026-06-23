@@ -7,6 +7,7 @@ import {
   formatRelativeTime,
   groupPromptHistoryResults,
   resolvePromptHistoryActionKeyBindings,
+  resolvePromptHistoryQueryIntent,
   resolvePromptHistorySessionGroup,
   togglePromptHistoryScope,
 } from "../src/selector";
@@ -175,6 +176,20 @@ test("resolvePromptHistoryActionKeyBindings makes copy primary by default", () =
   assert.deepEqual(resolvePromptHistoryActionKeyBindings("copy"), {
     copy: "enter",
     resume: "f2",
+  });
+});
+
+test("resolvePromptHistoryQueryIntent parses explicit action prefixes", () => {
+  assert.deepEqual(resolvePromptHistoryQueryIntent("resume: super_admin"), {
+    action: "resume",
+    query: "super_admin",
+  });
+  assert.deepEqual(resolvePromptHistoryQueryIntent(" copy: fix prompt"), {
+    action: "copy",
+    query: "fix prompt",
+  });
+  assert.deepEqual(resolvePromptHistoryQueryIntent("plain query"), {
+    query: "plain query",
   });
 });
 

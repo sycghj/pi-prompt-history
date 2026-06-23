@@ -12,6 +12,11 @@ export interface PromptHistoryActionKeyBindings {
   resume: KeyId;
 }
 
+export interface PromptHistoryQueryIntent {
+  query: string;
+  action?: PromptHistoryAction;
+}
+
 export type PromptHistorySessionGroup =
   | "current-session"
   | "same-cwd"
@@ -73,6 +78,18 @@ export function resolvePromptHistoryActionKeyBindings(
   primaryAction: PromptHistoryAction,
 ): PromptHistoryActionKeyBindings {
   return { ...PROMPT_HISTORY_ACTION_KEY_BINDINGS[primaryAction] };
+}
+
+export function resolvePromptHistoryQueryIntent(
+  input: string,
+): PromptHistoryQueryIntent {
+  const match = input.match(/^\s*(copy|resume)\s*:\s*([\s\S]*)$/i);
+  if (!match) return { query: input };
+
+  return {
+    action: match[1].toLowerCase() as PromptHistoryAction,
+    query: match[2] ?? "",
+  };
 }
 
 export function togglePromptHistoryScope(scope: SearchScope): SearchScope {

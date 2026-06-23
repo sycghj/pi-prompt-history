@@ -180,6 +180,69 @@ test("openPromptHistory seeds the initial query from the current editor text", a
   assert.equal(selectorOptions?.primaryAction, "resume");
 });
 
+test("openPromptHistory strips typed resume intent for initial search", async () => {
+  const searchCalls: Array<{ query: string }> = [];
+  let selectorOptions: { initialQuery?: string } | undefined;
+
+  class RecordingPromptHistorySelector extends NoopPromptHistorySelector {
+    constructor(options: { initialQuery?: string }) {
+      super();
+      selectorOptions = options;
+    }
+  }
+
+  const ctx = {
+    hasUI: true,
+    cwd: "/tmp/project-a",
+    sessionManager: {
+      getSessionFile: () => undefined,
+    },
+    ui: {
+      getEditorText: () => "resume: super_admin",
+      custom: async (
+        factory: (
+          tui: { requestRender: () => void },
+          theme: ReturnType<typeof createTheme>,
+          keybindings: unknown,
+          done: (result: unknown) => void,
+        ) => unknown,
+      ) => {
+        await factory({ requestRender: () => {} }, createTheme(), {}, () => {});
+        return null;
+      },
+      notify: () => {},
+      setEditorText: () => {},
+    },
+  };
+
+  await openPromptHistory(ctx as never, "local", {
+    resolveConfig: () => ({
+      dbPath: "/tmp/history.db",
+      sessionDir: "/tmp/sessions",
+      maxResults: 20,
+      localMode: "cwd",
+      primaryAction: "copy",
+    }),
+    createDb: () => ({
+      close() {},
+      listRecentPrompts() {
+        return [];
+      },
+    }),
+    refreshIndex: async () => [],
+    search: async (_db, options) => {
+      searchCalls.push(options);
+      return [];
+    },
+    loadSelector: async () => ({
+      PromptHistorySelector: RecordingPromptHistorySelector as never,
+    }),
+  });
+
+  assert.equal(searchCalls[0]?.query, "super_admin");
+  assert.equal(selectorOptions?.initialQuery, "resume: super_admin");
+});
+
 test("openPromptHistory forwards host keybindings into PromptHistorySelector", async () => {
   let selectorOptions:
     | {

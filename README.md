@@ -70,6 +70,8 @@ Example `~/.pi/agent/extensions/prompt-history.json`:
 - `PageUp` / `PageDown` — move by page
 - `Enter` — primary action (copy by default, resume when `primaryAction` is `"resume"`)
 - `F2` — secondary action (resume by default, copy when `primaryAction` is `"resume"`)
+- `resume: <query>` + `Enter` — search `<query>` and resume the selected result, bypassing function-key handling
+- `copy: <query>` + `Enter` — search `<query>` and copy the selected result, regardless of `primaryAction`
 - `Esc` — cancel without changing editor contents
 - `Tab` — toggle Local/Global mode
 - `Ctrl+R` — also toggle Local/Global mode while the overlay is open
@@ -80,6 +82,7 @@ Example `~/.pi/agent/extensions/prompt-history.json`:
 - **Resume action**: always prompts a follow-up choice:
   - `Fork from this point (default)`: if needed, prompt-history first resumes the selected session, then forks from the chosen prompt and pre-fills the selected text.
   - `Restore entire session`: switches to the selected entry's session file.
+- **Typed intent**: if `F2` is unreliable in your terminal, type `resume: super_admin` in the editor, press `Ctrl+R`, then press `Enter` on the desired result.
 
 ### Session-aware UX
 

@@ -103,7 +103,30 @@ test("PromptHistorySelector accepts legacy keybinding ids from injected managers
   assert.match(rendered, /\n│› second prompt/);
 });
 
-test("PromptHistorySelector treats explicit CSI F2 as resume action", () => {
+test("PromptHistorySelector treats F2 CSI variants as resume action", () => {
+  for (const sequence of ["\x1b[Q", "\x1b[1;1Q", "\x1b[12;1~"]) {
+    let selectedAction: PromptHistorySelection["action"] | undefined;
+    const selector = new PromptHistorySelector({
+      tui: { requestRender() {} } as never,
+      theme: createTheme(),
+      initialScope: "local",
+      initialResults: createResults() as never,
+      primaryAction: "copy",
+      currentCwd: "/tmp/project-a",
+      onSearch: async () => [],
+      onSelect: (selection: PromptHistorySelection) => {
+        selectedAction = selection.action;
+      },
+      onCancel: () => {},
+    } as never);
+
+    selector.handleInput(sequence);
+
+    assert.equal(selectedAction, "resume", JSON.stringify(sequence));
+  }
+});
+
+test("PromptHistorySelector lets typed resume intent make Enter resume", () => {
   let selectedAction: PromptHistorySelection["action"] | undefined;
   const selector = new PromptHistorySelector({
     tui: { requestRender() {} } as never,
@@ -112,6 +135,7 @@ test("PromptHistorySelector treats explicit CSI F2 as resume action", () => {
     initialResults: createResults() as never,
     primaryAction: "copy",
     currentCwd: "/tmp/project-a",
+    initialQuery: "resume: super_admin",
     onSearch: async () => [],
     onSelect: (selection: PromptHistorySelection) => {
       selectedAction = selection.action;
@@ -119,7 +143,7 @@ test("PromptHistorySelector treats explicit CSI F2 as resume action", () => {
     onCancel: () => {},
   } as never);
 
-  selector.handleInput("\x1b[1;1Q");
+  selector.handleInput("\r");
 
   assert.equal(selectedAction, "resume");
 });
