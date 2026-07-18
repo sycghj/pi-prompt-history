@@ -1,7 +1,7 @@
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 
-import { Database } from "bun:sqlite";
+import { Database } from "./sqlite-shim";
 
 import { expandHomePath } from "./config";
 import type { SearchScope } from "./search";
